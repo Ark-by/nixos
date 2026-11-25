@@ -404,6 +404,30 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
   inputs,
   ...
 }:
+let
+  # ══ ЕДИНСТВЕННЫЙ ИСТОЧНИК ЦВЕТОВ ═══════════════════════════════════════════
+  # Tokyo Night в формате base16. Отсюда Stylix берёт палитру для kitty,
+  # waybar, rofi, yazi, fish, starship, GTK, btop, а мы — цвета рамок Hyprland.
+  # Меняешь здесь → перекрашивается всё после nixos-rebuild.
+  palette = {
+    base00 = "1a1b26"; # фон
+    base01 = "16161e";
+    base02 = "2f3549";
+    base03 = "444b6a"; # комментарии
+    base04 = "787c99";
+    base05 = "a9b1d6"; # основной текст
+    base06 = "cbccd1";
+    base07 = "d5d6db";
+    base08 = "f7768e"; # красный
+    base09 = "ff9e64"; # оранжевый
+    base0A = "e0af68"; # жёлтый
+    base0B = "9ece6a"; # зелёный
+    base0C = "7dcfff"; # циан
+    base0D = "7aa2f7"; # синий (акцент)
+    base0E = "bb9af7"; # фиолетовый
+    base0F = "c0caf5";
+  };
+in
 {
   imports = [ inputs.stylix.homeModules.default ];
 
@@ -422,24 +446,7 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
     # Tokyo Night: та же палитра, что была в ark-tokyonight из репозитория.
     # Задаём инлайном, чтобы не зависеть от имён файлов в base16-schemes.
     polarity = "dark";
-    base16Scheme = {
-      base00 = "1a1b26"; # фон
-      base01 = "16161e";
-      base02 = "2f3549";
-      base03 = "444b6a"; # комментарии
-      base04 = "787c99";
-      base05 = "a9b1d6"; # основной текст
-      base06 = "cbccd1";
-      base07 = "d5d6db";
-      base08 = "f7768e"; # красный
-      base09 = "ff9e64"; # оранжевый
-      base0A = "e0af68"; # жёлтый
-      base0B = "9ece6a"; # зелёный
-      base0C = "7dcfff"; # циан
-      base0D = "7aa2f7"; # синий
-      base0E = "bb9af7"; # фиолетовый
-      base0F = "c0caf5";
-    };
+    base16Scheme = palette;
 
     fonts = {
       monospace = {
@@ -505,6 +512,11 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
       end
     '';
   };
+
+  # ══ btop ════════════════════════════════════════════════════════════════════
+  # Через home-manager, а не systemPackages, чтобы Stylix применил к нему тему
+  # (цель btop включается только когда включён programs.btop).
+  programs.btop.enable = true;
 
   # ══ starship ════════════════════════════════════════════════════════════════
   # Интеграцию с fish и цвета Stylix делают сами (targets.starship).
@@ -824,6 +836,15 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
 
       "hypr/hyprland.lua".source = ./configs/hypr/hyprland.lua;
 
+      # Рамки Hyprland — из той же палитры, что и всё остальное.
+      # (отдельной цели Stylix для Hyprland нет, поэтому генерируем сами)
+      "hypr/colors.lua".text = ''
+        return {
+          active   = "rgba(${palette.base0D}ff)",
+          inactive = "rgba(${palette.base04}aa)",
+        }
+      '';
+
       # hyprpaper: обои берём из ~/Pictures/Wallpapers/current.png — это симлинк
       # на выбранную через SUPER+W картинку. IPC включён, чтобы скрипт менял
       # обои без рестарта демона.
@@ -833,7 +854,6 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
         wallpaper = ,${config.home.homeDirectory}/Pictures/Wallpapers/current.png
       '';
       "hypr/keybinds.lua".source = ./configs/hypr/keybinds.lua;
-      "hypr/colors.lua".source = ./configs/hypr/colors.lua;
 
       # fastfetch: jsonc с комментариями
       "fastfetch/config.jsonc".source = ./configs/fastfetch.jsonc;
