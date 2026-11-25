@@ -149,7 +149,16 @@ install -d -m 0755 /etc/nixos/configs/yazi/plugins/smart-enter.yazi
 cat > /etc/nixos/configs/yazi/plugins/smart-enter.yazi/main.lua <<'YAZIPLUGIN'
 @@YAZIPLUGIN@@
 YAZIPLUGIN
-ok "configs/hypr/*.lua, configs/fastfetch.jsonc, configs/yazi/plugins/smart-enter.yazi (логотип докачает theme.sh)"
+
+install -d -m 0755 /etc/nixos/configs/bin
+cat > /etc/nixos/configs/bin/hypr-idle-hide <<'IDLEHIDE'
+@@IDLEHIDE@@
+IDLEHIDE
+
+cat > /etc/nixos/configs/bin/hypr-idle-restore <<'IDLERESTORE'
+@@IDLERESTORE@@
+IDLERESTORE
+ok "configs/hypr/*.lua, configs/fastfetch.jsonc, configs/yazi/*, configs/bin/* (логотип докачает theme.sh)"
 
 # ── flakes для этого запуска ────────────────────────────────────────────────
 subject_flakes() {

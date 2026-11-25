@@ -41,6 +41,7 @@ ok "$BK"
 say "Раскладываю конфиги"
 install -d -m 0755 /etc/nixos/configs/hypr /etc/nixos/configs/fastfetch
 install -d -m 0755 /etc/nixos/configs/yazi/plugins/smart-enter.yazi
+install -d -m 0755 /etc/nixos/configs/bin
 install -m 0644 "$SRC/flake.nix"                       /etc/nixos/flake.nix
 install -m 0644 "$SRC/home.nix"                        /etc/nixos/home.nix
 install -m 0644 "$SRC/configs/fastfetch.jsonc"         /etc/nixos/configs/fastfetch.jsonc
@@ -49,9 +50,11 @@ install -m 0644 "$SRC/configs/hypr/keybinds.lua"       /etc/nixos/configs/hypr/k
 install -m 0644 "$SRC/configs/hypr/colors.lua"         /etc/nixos/configs/hypr/colors.lua
 install -m 0644 "$SRC/configs/yazi/plugins/smart-enter.yazi/main.lua" \
   /etc/nixos/configs/yazi/plugins/smart-enter.yazi/main.lua
+install -m 0755 "$SRC/configs/bin/hypr-idle-hide"      /etc/nixos/configs/bin/hypr-idle-hide
+install -m 0755 "$SRC/configs/bin/hypr-idle-restore"   /etc/nixos/configs/bin/hypr-idle-restore
 sed -i "s/@USERNAME@/${U}/g" /etc/nixos/flake.nix
 grep -q "@USERNAME@" /etc/nixos/flake.nix && die "не подставилось имя пользователя"
-ok "flake.nix, home.nix, configs/hypr/*, configs/fastfetch.jsonc, yazi smart-enter"
+ok "flake.nix, home.nix, configs/hypr/*, configs/fastfetch.jsonc, yazi smart-enter, idle-скрипты"
 
 say "Логотип fastfetch"
 if [ -s /etc/nixos/configs/fastfetch/logo2.png ]; then

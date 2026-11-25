@@ -367,6 +367,9 @@ in
     # для биндов: громкость (wpctl) и медиа-клавиши (playerctl)
     wireplumber
     playerctl
+
+    # нужен скриптам простоя hypr-idle-hide/restore
+    jq
   ];
 }
 NIXSTACK
@@ -756,8 +759,34 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
   # ══ Hyprland и fastfetch: файлы ═════════════════════════════════════════════
   # Hyprland 0.55+ читает ~/.config/hypr/hyprland.lua и перечитывает его при
   # сохранении. keybinds.lua подключается через require(), colors.lua — dofile().
+  # ══ Скрипты простоя ═════════════════════════════════════════════════════════
+  # По простою уводим сессию на пустой стол __idle__, при активности — обратно.
+  # Блокировки экрана нет специально.
+  home.file = {
+    ".local/bin/hypr-idle-hide" = {
+      source = ./configs/bin/hypr-idle-hide;
+      executable = true;
+    };
+    ".local/bin/hypr-idle-restore" = {
+      source = ./configs/bin/hypr-idle-restore;
+      executable = true;
+    };
+  };
+
   xdg.configFile =
     {
+      # hypridle: 300 с простоя → hypr-idle-hide, возврат активности → restore.
+      # Путь собираем из homeDirectory, чтобы не хардкодить /home/ark.
+      "hypr/hypridle.conf".text = ''
+        listener {
+            timeout = 300
+
+            on-timeout = ${config.home.homeDirectory}/.local/bin/hypr-idle-hide
+
+            on-resume = ${config.home.homeDirectory}/.local/bin/hypr-idle-restore
+        }
+      '';
+
       "hypr/hyprland.lua".source = ./configs/hypr/hyprland.lua;
       "hypr/keybinds.lua".source = ./configs/hypr/keybinds.lua;
       "hypr/colors.lua".source = ./configs/hypr/colors.lua;
@@ -1242,7 +1271,88 @@ end
 
 return { entry = entry, setup = setup }
 YAZIPLUGIN
-ok "configs/hypr/*.lua, configs/fastfetch.jsonc, configs/yazi/plugins/smart-enter.yazi (логотип докачает theme.sh)"
+
+install -d -m 0755 /etc/nixos/configs/bin
+cat > /etc/nixos/configs/bin/hypr-idle-hide <<'IDLEHIDE'
+#!/usr/bin/env bash
+# Уводит сессию на пустой именованный стол __idle__ по простою.
+# Возврат делает hypr-idle-restore (on-resume в hypridle.conf).
+set -euo pipefail
+
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/hypr-idle-park"
+STATE_FILE="$STATE_DIR/restore.json"
+
+mkdir -p "$STATE_DIR"
+chmod 700 "$STATE_DIR"
+
+# Не перезаписываем исходное рабочее пространство.
+[[ -f "$STATE_FILE" ]] && exit 0
+
+# Получаем текущее рабочее пространство.
+ACTIVE="$(hyprctl -j activeworkspace)"
+
+NAME="$(jq -r '.name // empty' <<< "$ACTIVE")"
+MONITOR="$(jq -r '.monitor // empty' <<< "$ACTIVE")"
+
+[[ -n "$NAME" ]] || exit 1
+
+# Не переключаемся повторно из специального пространства.
+[[ "$NAME" != "__idle__" ]] || exit 0
+[[ "$NAME" != special:* ]] || exit 0
+
+# Сохраняем исходное состояние.
+jq -n \
+    --arg name "$NAME" \
+    --arg monitor "$MONITOR" \
+    '{name: $name, monitor: $monitor}' \
+    > "$STATE_FILE.tmp"
+
+mv "$STATE_FILE.tmp" "$STATE_FILE"
+
+# Переключаемся на пустой рабочий стол.
+if ! hyprctl dispatch workspace "name:__idle__"; then
+    rm -f "$STATE_FILE"
+    exit 1
+fi
+IDLEHIDE
+
+cat > /etc/nixos/configs/bin/hypr-idle-restore <<'IDLERESTORE'
+#!/usr/bin/env bash
+# Возвращает сессию на стол, с которого ушли по простою.
+set -euo pipefail
+
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/hypr-idle-park"
+STATE_FILE="$STATE_DIR/restore.json"
+
+[[ -f "$STATE_FILE" ]] || exit 0
+
+NAME="$(jq -r '.name' "$STATE_FILE")"
+MONITOR="$(jq -r '.monitor' "$STATE_FILE")"
+
+# Возвращаемся на исходный монитор.
+if [[ -n "$MONITOR" ]]; then
+    hyprctl dispatch focusmonitor "$MONITOR" || true
+fi
+
+# Определяем правильный формат имени пространства.
+case "$NAME" in
+    name:*|special:*)
+        TARGET="$NAME"
+        ;;
+    *[!0-9]*|'')
+        TARGET="name:$NAME"
+        ;;
+    *)
+        TARGET="$NAME"
+        ;;
+esac
+
+# Восстанавливаем рабочее пространство.
+if hyprctl dispatch workspace "$TARGET"; then
+    rm -f "$STATE_FILE"
+fi
+IDLERESTORE
+ok "configs/hypr/*.lua, configs/fastfetch.jsonc, configs/yazi/*, configs/bin/* (логотип докачает theme.sh)"
 
 # ── flakes для этого запуска ────────────────────────────────────────────────
 enable_flakes() {

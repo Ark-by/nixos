@@ -185,5 +185,8 @@ in
     # для биндов: громкость (wpctl) и медиа-клавиши (playerctl)
     wireplumber
     playerctl
+
+    # нужен скриптам простоя hypr-idle-hide/restore
+    jq
   ];
 }

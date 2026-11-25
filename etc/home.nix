@@ -374,8 +374,34 @@
   # ══ Hyprland и fastfetch: файлы ═════════════════════════════════════════════
   # Hyprland 0.55+ читает ~/.config/hypr/hyprland.lua и перечитывает его при
   # сохранении. keybinds.lua подключается через require(), colors.lua — dofile().
+  # ══ Скрипты простоя ═════════════════════════════════════════════════════════
+  # По простою уводим сессию на пустой стол __idle__, при активности — обратно.
+  # Блокировки экрана нет специально.
+  home.file = {
+    ".local/bin/hypr-idle-hide" = {
+      source = ./configs/bin/hypr-idle-hide;
+      executable = true;
+    };
+    ".local/bin/hypr-idle-restore" = {
+      source = ./configs/bin/hypr-idle-restore;
+      executable = true;
+    };
+  };
+
   xdg.configFile =
     {
+      # hypridle: 300 с простоя → hypr-idle-hide, возврат активности → restore.
+      # Путь собираем из homeDirectory, чтобы не хардкодить /home/ark.
+      "hypr/hypridle.conf".text = ''
+        listener {
+            timeout = 300
+
+            on-timeout = ${config.home.homeDirectory}/.local/bin/hypr-idle-hide
+
+            on-resume = ${config.home.homeDirectory}/.local/bin/hypr-idle-restore
+        }
+      '';
+
       "hypr/hyprland.lua".source = ./configs/hypr/hyprland.lua;
       "hypr/keybinds.lua".source = ./configs/hypr/keybinds.lua;
       "hypr/colors.lua".source = ./configs/hypr/colors.lua;
