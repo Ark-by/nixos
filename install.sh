@@ -370,6 +370,10 @@ in
 
     # нужен скриптам простоя hypr-idle-hide/restore
     jq
+
+    # меню: лаунчер и монитор ресурсов
+    rofi
+    btop
   ];
 }
 NIXSTACK
@@ -771,6 +775,14 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
       source = ./configs/bin/hypr-idle-restore;
       executable = true;
     };
+    ".local/bin/wallpaper-pick" = {
+      source = ./configs/bin/wallpaper-pick;
+      executable = true;
+    };
+    ".local/bin/shortcuts" = {
+      source = ./configs/bin/shortcuts;
+      executable = true;
+    };
   };
 
   xdg.configFile =
@@ -788,6 +800,15 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
       '';
 
       "hypr/hyprland.lua".source = ./configs/hypr/hyprland.lua;
+
+      # hyprpaper: обои берём из ~/Pictures/Wallpapers/current.png — это симлинк
+      # на выбранную через SUPER+W картинку. IPC включён, чтобы скрипт менял
+      # обои без рестарта демона.
+      "hypr/hyprpaper.conf".text = ''
+        ipc = on
+        preload = ${config.home.homeDirectory}/Pictures/Wallpapers/current.png
+        wallpaper = ,${config.home.homeDirectory}/Pictures/Wallpapers/current.png
+      '';
       "hypr/keybinds.lua".source = ./configs/hypr/keybinds.lua;
       "hypr/colors.lua".source = ./configs/hypr/colors.lua;
 
@@ -1070,10 +1091,15 @@ bind(mainMod .. " + B", hl.dsp.exec_cmd(browser),     "Приложения: Б�
 bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager), "Приложения: Файловый менеджер")
 bind(mainMod .. " + S", hl.dsp.exec_cmd("zeditor"),   "Приложения: Zed")
 
--- Меню панели: на Arch это были вызовы quickshell (`qs ipc call ui ...`).
--- Вернём, когда настроим waybar со своими скриптами:
---   SUPER+R — лаунчер, SUPER+W — обои, SUPER+T — тема,
---   SUPER+Z — сервисы, SUPER+I — монитор, SUPER+A — справка.
+-- Меню (rofi + скрипты из ~/.local/bin; путь через $HOME, чтобы не зависеть от PATH)
+local home = os.getenv("HOME")
+bind(mainMod .. " + R", hl.dsp.exec_cmd("rofi -show drun"),                     "Меню: Приложения")
+bind(mainMod .. " + W", hl.dsp.exec_cmd(home .. "/.local/bin/wallpaper-pick"),  "Меню: Обои")
+bind(mainMod .. " + A", hl.dsp.exec_cmd(home .. "/.local/bin/shortcuts"),       "Меню: Горячие клавиши")
+bind(mainMod .. " + I", hl.dsp.exec_cmd("kitty -e btop"),                       "Меню: Монитор ресурсов")
+
+-- Свободны: SUPER+T (смена темы — пока требует nixos-rebuild) и
+-- SUPER+Z (на Arch это был обход блокировок, сервиса в NixOS нет).
 
 -- Окна
 bind(mainMod .. " + C", hl.dsp.window.close(),                        "Окна: Закрыть окно")
@@ -1352,6 +1378,70 @@ if hyprctl dispatch workspace "$TARGET"; then
     rm -f "$STATE_FILE"
 fi
 IDLERESTORE
+
+cat > /etc/nixos/configs/bin/wallpaper-pick <<'WALLPAPER'
+#!/usr/bin/env bash
+# Выбор обоев через rofi. Обои живут в ~/Pictures/Wallpapers — там yazi пишет
+# без sudo. Выбранная картинка линкуется в current.png и применяется hyprpaper.
+set -euo pipefail
+
+DIR="${WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
+LINK="$DIR/current.png"
+
+mkdir -p "$DIR"
+
+mapfile -t files < <(
+    find "$DIR" -maxdepth 1 -type f \
+        \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) \
+        ! -name 'current.png' | sort
+)
+
+if [ "${#files[@]}" -eq 0 ]; then
+    rofi -e "В $DIR нет картинок — положи туда png/jpg и повтори."
+    exit 0
+fi
+
+choice="$(printf '%s\n' "${files[@]}" | rofi -dmenu -i -p 'Обои')"
+[ -n "$choice" ] || exit 0
+
+ln -sfn "$choice" "$LINK"
+
+# hyprpaper: сначала выгружаем старое, потом грузим новое.
+hyprctl hyprpaper unload all >/dev/null 2>&1 || true
+hyprctl hyprpaper preload "$LINK" >/dev/null
+hyprctl hyprpaper wallpaper ",$LINK" >/dev/null
+WALLPAPER
+
+cat > /etc/nixos/configs/bin/shortcuts <<'SHORTCUTS'
+#!/usr/bin/env bash
+# Шпаргалка по клавишам: список в rofi.
+set -euo pipefail
+
+rofi -dmenu -i -p 'Клавиши' -no-custom <<'EOF'
+Super + R            Приложения (rofi)
+Super + W            Обои (rofi)
+Super + A            Эта шпаргалка
+Super + I            Монитор ресурсов (btop)
+Super + Q            Терминал (kitty)
+Super + B            Браузер (firefox)
+Super + E            Файловый менеджер (yazi)
+Super + S            Zed
+Super + C            Закрыть окно
+Super + V            Плавающее / обычное
+Super + P            Pseudo-режим
+Super + J            Сменить направление сплита
+Super + M            Свёрнутые окна
+Super + ← ↑ ↓ →      Фокус между окнами
+Super + 1…0          Перейти на стол
+Super + Shift + 1…0  Перенести окно на стол
+Super + колесо мыши  Листать столы
+Alt + Tab            Предыдущий стол
+Super + ЛКМ          Перетащить окно
+Super + ПКМ          Изменить размер окна
+Super + Escape       Выйти из сессии
+Fn (медиа)           Громкость / плеер
+EOF
+SHORTCUTS
 ok "configs/hypr/*.lua, configs/fastfetch.jsonc, configs/yazi/*, configs/bin/* (логотип докачает theme.sh)"
 
 # ── flakes для этого запуска ────────────────────────────────────────────────

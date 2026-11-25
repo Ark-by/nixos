@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Шпаргалка по клавишам: список в rofi.
+set -euo pipefail
+
+rofi -dmenu -i -p 'Клавиши' -no-custom <<'EOF'
+Super + R            Приложения (rofi)
+Super + W            Обои (rofi)
+Super + A            Эта шпаргалка
+Super + I            Монитор ресурсов (btop)
+Super + Q            Терминал (kitty)
+Super + B            Браузер (firefox)
+Super + E            Файловый менеджер (yazi)
+Super + S            Zed
+Super + C            Закрыть окно
+Super + V            Плавающее / обычное
+Super + P            Pseudo-режим
+Super + J            Сменить направление сплита
+Super + M            Свёрнутые окна
+Super + ← ↑ ↓ →      Фокус между окнами
+Super + 1…0          Перейти на стол
+Super + Shift + 1…0  Перенести окно на стол
+Super + колесо мыши  Листать столы
+Alt + Tab            Предыдущий стол
+Super + ЛКМ          Перетащить окно
+Super + ПКМ          Изменить размер окна
+Super + Escape       Выйти из сессии
+Fn (медиа)           Громкость / плеер
+EOF

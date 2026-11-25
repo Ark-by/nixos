@@ -158,6 +158,14 @@ IDLEHIDE
 cat > /etc/nixos/configs/bin/hypr-idle-restore <<'IDLERESTORE'
 @@IDLERESTORE@@
 IDLERESTORE
+
+cat > /etc/nixos/configs/bin/wallpaper-pick <<'WALLPAPER'
+@@WALLPAPER@@
+WALLPAPER
+
+cat > /etc/nixos/configs/bin/shortcuts <<'SHORTCUTS'
+@@SHORTCUTS@@
+SHORTCUTS
 ok "configs/hypr/*.lua, configs/fastfetch.jsonc, configs/yazi/*, configs/bin/* (логотип докачает theme.sh)"
 
 # ── flakes для этого запуска ────────────────────────────────────────────────

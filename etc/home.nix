@@ -386,6 +386,14 @@
       source = ./configs/bin/hypr-idle-restore;
       executable = true;
     };
+    ".local/bin/wallpaper-pick" = {
+      source = ./configs/bin/wallpaper-pick;
+      executable = true;
+    };
+    ".local/bin/shortcuts" = {
+      source = ./configs/bin/shortcuts;
+      executable = true;
+    };
   };
 
   xdg.configFile =
@@ -403,6 +411,15 @@
       '';
 
       "hypr/hyprland.lua".source = ./configs/hypr/hyprland.lua;
+
+      # hyprpaper: обои берём из ~/Pictures/Wallpapers/current.png — это симлинк
+      # на выбранную через SUPER+W картинку. IPC включён, чтобы скрипт менял
+      # обои без рестарта демона.
+      "hypr/hyprpaper.conf".text = ''
+        ipc = on
+        preload = ${config.home.homeDirectory}/Pictures/Wallpapers/current.png
+        wallpaper = ,${config.home.homeDirectory}/Pictures/Wallpapers/current.png
+      '';
       "hypr/keybinds.lua".source = ./configs/hypr/keybinds.lua;
       "hypr/colors.lua".source = ./configs/hypr/colors.lua;
 

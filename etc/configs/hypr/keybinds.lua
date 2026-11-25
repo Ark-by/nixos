@@ -29,10 +29,15 @@ bind(mainMod .. " + B", hl.dsp.exec_cmd(browser),     "Приложения: Б�
 bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager), "Приложения: Файловый менеджер")
 bind(mainMod .. " + S", hl.dsp.exec_cmd("zeditor"),   "Приложения: Zed")
 
--- Меню панели: на Arch это были вызовы quickshell (`qs ipc call ui ...`).
--- Вернём, когда настроим waybar со своими скриптами:
---   SUPER+R — лаунчер, SUPER+W — обои, SUPER+T — тема,
---   SUPER+Z — сервисы, SUPER+I — монитор, SUPER+A — справка.
+-- Меню (rofi + скрипты из ~/.local/bin; путь через $HOME, чтобы не зависеть от PATH)
+local home = os.getenv("HOME")
+bind(mainMod .. " + R", hl.dsp.exec_cmd("rofi -show drun"),                     "Меню: Приложения")
+bind(mainMod .. " + W", hl.dsp.exec_cmd(home .. "/.local/bin/wallpaper-pick"),  "Меню: Обои")
+bind(mainMod .. " + A", hl.dsp.exec_cmd(home .. "/.local/bin/shortcuts"),       "Меню: Горячие клавиши")
+bind(mainMod .. " + I", hl.dsp.exec_cmd("kitty -e btop"),                       "Меню: Монитор ресурсов")
+
+-- Свободны: SUPER+T (смена темы — пока требует nixos-rebuild) и
+-- SUPER+Z (на Arch это был обход блокировок, сервиса в NixOS нет).
 
 -- Окна
 bind(mainMod .. " + C", hl.dsp.window.close(),                        "Окна: Закрыть окно")

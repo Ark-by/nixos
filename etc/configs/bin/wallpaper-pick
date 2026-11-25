@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Выбор обоев через rofi. Обои живут в ~/Pictures/Wallpapers — там yazi пишет
+# без sudo. Выбранная картинка линкуется в current.png и применяется hyprpaper.
+set -euo pipefail
+
+DIR="${WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
+LINK="$DIR/current.png"
+
+mkdir -p "$DIR"
+
+mapfile -t files < <(
+    find "$DIR" -maxdepth 1 -type f \
+        \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) \
+        ! -name 'current.png' | sort
+)
+
+if [ "${#files[@]}" -eq 0 ]; then
+    rofi -e "В $DIR нет картинок — положи туда png/jpg и повтори."
+    exit 0
+fi
+
+choice="$(printf '%s\n' "${files[@]}" | rofi -dmenu -i -p 'Обои')"
+[ -n "$choice" ] || exit 0
+
+ln -sfn "$choice" "$LINK"
+
+# hyprpaper: сначала выгружаем старое, потом грузим новое.
+hyprctl hyprpaper unload all >/dev/null 2>&1 || true
+hyprctl hyprpaper preload "$LINK" >/dev/null
+hyprctl hyprpaper wallpaper ",$LINK" >/dev/null
