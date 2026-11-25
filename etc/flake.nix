@@ -45,6 +45,10 @@
           ./system.nix
           ./hypr-stack.nix
 
+          # Без этой строки нет опций programs.hyprlogin: модуль живёт в самом
+          # флейке hyprlogin, а не в nixpkgs (оверлей даёт только пакет).
+          inputs.hyprlogin.nixosModules.default
+
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;

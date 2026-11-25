@@ -1,0 +1,3 @@
+# Все текстовые файлы — LF. Иначе на Windows Git отдаёт CRLF,
+# и bash-скрипты на NixOS падают с \r': command not found.
+* text=auto eol=lf
