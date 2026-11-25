@@ -125,6 +125,32 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
 NIXHOME
 ok "home.nix"
 
+# ── конфиги приложений (home.nix на них ссылается) ──────────────────────────
+say "Раскладываю конфиги приложений"
+install -d -m 0755 /etc/nixos/configs/hypr /etc/nixos/configs/fastfetch
+
+cat > /etc/nixos/configs/hypr/hyprland.lua <<'HYPRLAND'
+@@HYPRLAND@@
+HYPRLAND
+
+cat > /etc/nixos/configs/hypr/keybinds.lua <<'KEYBINDS'
+@@KEYBINDS@@
+KEYBINDS
+
+cat > /etc/nixos/configs/hypr/colors.lua <<'COLORS'
+@@COLORS@@
+COLORS
+
+cat > /etc/nixos/configs/fastfetch.jsonc <<'FASTFETCH'
+@@FASTFETCH@@
+FASTFETCH
+
+install -d -m 0755 /etc/nixos/configs/yazi/plugins/smart-enter.yazi
+cat > /etc/nixos/configs/yazi/plugins/smart-enter.yazi/main.lua <<'YAZIPLUGIN'
+@@YAZIPLUGIN@@
+YAZIPLUGIN
+ok "configs/hypr/*.lua, configs/fastfetch.jsonc, configs/yazi/plugins/smart-enter.yazi (логотип докачает theme.sh)"
+
 # ── flakes для этого запуска ────────────────────────────────────────────────
 subject_flakes() {
   say "Включаю flakes"

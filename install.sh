@@ -506,6 +506,63 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
     };
   };
 
+  # ══ yazi ════════════════════════════════════════════════════════════════════
+  # Из Ark-by/arch (exp): показывать скрытые, Enter = войти в папку или открыть
+  # файл (smart-enter), текст открывать в Zed.
+  #
+  # Отличия от оригинала:
+  #   • opener использует "$@" вместо устаревшего %s;
+  #   • desc "Sublime Text" заменён на "Zed";
+  #   • добавлены [open] правила, иначе Enter на файле уходил бы в xdg-open.
+  # Тему ark.yazi перенесём вместе с zed-темой (флейвор — отдельный шаг).
+  programs.yazi = {
+    enable = true;
+    shellWrapperName = "y";
+
+    settings = {
+      mgr.show_hidden = true; # как в yazi.toml
+
+      opener.edit = [
+        {
+          run = ''zeditor -w "$@"'';
+          desc = "Zed";
+          for = "unix";
+          block = false;
+        }
+      ];
+
+      open.rules = [
+        { mime = "text/*"; use = "edit"; }
+        { mime = "application/json"; use = "edit"; }
+        { mime = "application/x-yaml"; use = "edit"; }
+        { mime = "application/toml"; use = "edit"; }
+        { mime = "application/x-shellscript"; use = "edit"; }
+        { mime = "inode/x-empty"; use = "edit"; }
+        { mime = "application/x-*"; use = "edit"; }
+      ];
+    };
+
+    keymap.mgr.prepend_keymap = [
+      {
+        on = [ "<Enter>" ];
+        run = "plugin smart-enter";
+        desc = "Войти в папку или открыть файл";
+      }
+      {
+        on = [ "~" ];
+        run = "help";
+        desc = "Справка по клавишам";
+      }
+      {
+        on = [ "Ё" ];
+        run = "help";
+        desc = "Справка (рус. раскладка, Shift)";
+      }
+    ];
+
+    plugins.smart-enter = ./configs/yazi/plugins/smart-enter.yazi;
+  };
+
   # ══ Hyprland и fastfetch: файлы ═════════════════════════════════════════════
   # Hyprland 0.55+ читает ~/.config/hypr/hyprland.lua и перечитывает его при
   # сохранении. keybinds.lua подключается через require(), colors.lua — dofile().
@@ -980,7 +1037,22 @@ cat > /etc/nixos/configs/fastfetch.jsonc <<'FASTFETCH'
   ]
 }
 FASTFETCH
-ok "configs/hypr/*.lua, configs/fastfetch.jsonc (логотип докачает theme.sh)"
+
+install -d -m 0755 /etc/nixos/configs/yazi/plugins/smart-enter.yazi
+cat > /etc/nixos/configs/yazi/plugins/smart-enter.yazi/main.lua <<'YAZIPLUGIN'
+--- @since 25.5.31
+--- @sync entry
+
+local function setup(self, opts) self.open_multi = opts.open_multi end
+
+local function entry(self)
+	local h = cx.active.current.hovered
+	ya.emit(h and h.cha.is_dir and "enter" or "open", { hovered = not self.open_multi })
+end
+
+return { entry = entry, setup = setup }
+YAZIPLUGIN
+ok "configs/hypr/*.lua, configs/fastfetch.jsonc, configs/yazi/plugins/smart-enter.yazi (логотип докачает theme.sh)"
 
 # ── flakes для этого запуска ────────────────────────────────────────────────
 enable_flakes() {

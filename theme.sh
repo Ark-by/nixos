@@ -40,15 +40,18 @@ ok "$BK"
 
 say "Раскладываю конфиги"
 install -d -m 0755 /etc/nixos/configs/hypr /etc/nixos/configs/fastfetch
+install -d -m 0755 /etc/nixos/configs/yazi/plugins/smart-enter.yazi
 install -m 0644 "$SRC/flake.nix"                       /etc/nixos/flake.nix
 install -m 0644 "$SRC/home.nix"                        /etc/nixos/home.nix
 install -m 0644 "$SRC/configs/fastfetch.jsonc"         /etc/nixos/configs/fastfetch.jsonc
 install -m 0644 "$SRC/configs/hypr/hyprland.lua"       /etc/nixos/configs/hypr/hyprland.lua
 install -m 0644 "$SRC/configs/hypr/keybinds.lua"       /etc/nixos/configs/hypr/keybinds.lua
 install -m 0644 "$SRC/configs/hypr/colors.lua"         /etc/nixos/configs/hypr/colors.lua
+install -m 0644 "$SRC/configs/yazi/plugins/smart-enter.yazi/main.lua" \
+  /etc/nixos/configs/yazi/plugins/smart-enter.yazi/main.lua
 sed -i "s/@USERNAME@/${U}/g" /etc/nixos/flake.nix
 grep -q "@USERNAME@" /etc/nixos/flake.nix && die "не подставилось имя пользователя"
-ok "flake.nix, home.nix, configs/hypr/*, configs/fastfetch.jsonc"
+ok "flake.nix, home.nix, configs/hypr/*, configs/fastfetch.jsonc, yazi smart-enter"
 
 say "Логотип fastfetch"
 if [ -s /etc/nixos/configs/fastfetch/logo2.png ]; then
