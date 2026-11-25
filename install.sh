@@ -374,6 +374,9 @@ in
     # меню: лаунчер и монитор ресурсов
     rofi
     btop
+
+    # обои: swaybg проще и надёжнее hyprpaper (нет конфига и IPC)
+    swaybg
   ];
 }
 NIXSTACK
@@ -536,7 +539,9 @@ in
   # последним и может переопределять геометрию, используя те же переменные.
   programs.waybar = {
     enable = true;
-    systemd.enable = true; # стартует с graphical-session.target, exec-once не нужен
+    # НЕ через systemd: юнит подключается к graphical-session.target, которого
+    # нет, если сессия запущена без uwsm. Стартуем из hyprland.lua.
+    systemd.enable = false;
 
     settings = [
       {
@@ -818,6 +823,10 @@ in
       source = ./configs/bin/shortcuts;
       executable = true;
     };
+    ".local/bin/wallpaper-apply" = {
+      source = ./configs/bin/wallpaper-apply;
+      executable = true;
+    };
   };
 
   xdg.configFile =
@@ -909,9 +918,12 @@ local browser     = "firefox"
 ---- AUTOSTART ----
 -------------------
 
--- Демоны рабочего стола. waybar сюда добавим после его конфига.
+-- Демоны рабочего стола. Запускаем из Hyprland, а не через systemd-юнит
+-- waybar: юнит висит на graphical-session.target, которого может не быть,
+-- если сессия поднята без uwsm. swaybg держит обои из ~/Pictures/Wallpapers.
 hl.on("hyprland.start", function()
-    hl.exec_cmd("hyprpaper")
+    hl.exec_cmd("waybar")
+    hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/wallpaper-apply")
     hl.exec_cmd("hypridle")
     hl.exec_cmd("hyprpolkitagent")
 end)
@@ -1471,16 +1483,16 @@ echo "выбрано: $choice"
 LINK="$DIR/current.png"
 ln -sfn "$choice" "$LINK" || fail "не удалось создать симлинк $LINK"
 
-if ! pgrep -x hyprpaper >/dev/null; then
-    echo "hyprpaper не запущен, стартую"
-    hyprctl dispatch exec hyprpaper >/dev/null 2>&1 || true
-    sleep 1
-fi
+# Обои ставит swaybg: без конфига и IPC, поэтому нечему падать.
+pkill -x swaybg 2>/dev/null || true
+setsid swaybg -i "$LINK" -m fill >/dev/null 2>&1 &
+sleep 0.3
 
-hyprctl hyprpaper unload all >/dev/null 2>&1 || true
-hyprctl hyprpaper preload "$LINK" || true
-hyprctl hyprpaper wallpaper ",$LINK" || fail "hyprpaper не принял обои (проверь, что он запущен)"
-echo "ок"
+if pgrep -x swaybg >/dev/null; then
+    echo "ок"
+else
+    fail "swaybg не запустился"
+fi
 WALLPAPER
 
 cat > /etc/nixos/configs/bin/shortcuts <<'SHORTCUTS'
@@ -1513,6 +1525,19 @@ Super + Escape       Выйти из сессии
 Fn (медиа)           Громкость / плеер
 EOF
 SHORTCUTS
+
+cat > /etc/nixos/configs/bin/wallpaper-apply <<'WALLPAPERAPPLY'
+#!/usr/bin/env bash
+# Запускает обои на текущий выбранный файл. Вызывается из автозапуска Hyprland
+# и из wallpaper-pick. swaybg простой: без конфига, без IPC, без гонок.
+set -uo pipefail
+
+LINK="$HOME/Pictures/Wallpapers/current.png"
+[ -e "$LINK" ] || exit 0
+
+pkill -x swaybg 2>/dev/null || true
+exec swaybg -i "$LINK" -m fill
+WALLPAPERAPPLY
 ok "configs/hypr/*.lua, configs/fastfetch.jsonc, configs/yazi/*, configs/bin/* (логотип докачает theme.sh)"
 
 # ── flakes для этого запуска ────────────────────────────────────────────────

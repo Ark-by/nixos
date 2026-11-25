@@ -147,7 +147,9 @@ in
   # последним и может переопределять геометрию, используя те же переменные.
   programs.waybar = {
     enable = true;
-    systemd.enable = true; # стартует с graphical-session.target, exec-once не нужен
+    # НЕ через systemd: юнит подключается к graphical-session.target, которого
+    # нет, если сессия запущена без uwsm. Стартуем из hyprland.lua.
+    systemd.enable = false;
 
     settings = [
       {
@@ -427,6 +429,10 @@ in
     };
     ".local/bin/shortcuts" = {
       source = ./configs/bin/shortcuts;
+      executable = true;
+    };
+    ".local/bin/wallpaper-apply" = {
+      source = ./configs/bin/wallpaper-apply;
       executable = true;
     };
   };

@@ -55,6 +55,7 @@ install -m 0755 "$SRC/configs/bin/hypr-idle-hide"      /etc/nixos/configs/bin/hy
 install -m 0755 "$SRC/configs/bin/hypr-idle-restore"   /etc/nixos/configs/bin/hypr-idle-restore
 install -m 0755 "$SRC/configs/bin/wallpaper-pick"      /etc/nixos/configs/bin/wallpaper-pick
 install -m 0755 "$SRC/configs/bin/shortcuts"           /etc/nixos/configs/bin/shortcuts
+install -m 0755 "$SRC/configs/bin/wallpaper-apply"     /etc/nixos/configs/bin/wallpaper-apply
 sed -i "s/@USERNAME@/${U}/g" /etc/nixos/flake.nix
 grep -q "@USERNAME@" /etc/nixos/flake.nix && die "не подставилось имя пользователя"
 ok "flake.nix, home.nix, configs/hypr/*, configs/fastfetch.jsonc, yazi smart-enter, idle-скрипты"

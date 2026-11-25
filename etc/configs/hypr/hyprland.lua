@@ -32,9 +32,12 @@ local browser     = "firefox"
 ---- AUTOSTART ----
 -------------------
 
--- Демоны рабочего стола. waybar сюда добавим после его конфига.
+-- Демоны рабочего стола. Запускаем из Hyprland, а не через systemd-юнит
+-- waybar: юнит висит на graphical-session.target, которого может не быть,
+-- если сессия поднята без uwsm. swaybg держит обои из ~/Pictures/Wallpapers.
 hl.on("hyprland.start", function()
-    hl.exec_cmd("hyprpaper")
+    hl.exec_cmd("waybar")
+    hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/wallpaper-apply")
     hl.exec_cmd("hypridle")
     hl.exec_cmd("hyprpolkitagent")
 end)

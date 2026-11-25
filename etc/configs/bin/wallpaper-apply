@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Запускает обои на текущий выбранный файл. Вызывается из автозапуска Hyprland
+# и из wallpaper-pick. swaybg простой: без конфига, без IPC, без гонок.
+set -uo pipefail
+
+LINK="$HOME/Pictures/Wallpapers/current.png"
+[ -e "$LINK" ] || exit 0
+
+pkill -x swaybg 2>/dev/null || true
+exec swaybg -i "$LINK" -m fill
