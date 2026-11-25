@@ -481,7 +481,18 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
 
   # ══ fish ════════════════════════════════════════════════════════════════════
   # Алиасы из старого .zshrc добавим отдельным шагом, когда сверим список.
-  programs.fish.enable = true;
+  programs.fish = {
+    enable = true;
+
+    # fastfetch при открытии kitty. FASTFETCH_SHOWN не даёт ему срабатывать
+    # повторно во вложенных fish. Хочешь во всех терминалах — убери проверку TERM.
+    interactiveShellInit = ''
+      if status is-interactive; and not set -q FASTFETCH_SHOWN; and test "$TERM" = xterm-kitty
+          set -gx FASTFETCH_SHOWN 1
+          fastfetch
+      end
+    '';
+  };
 
   # ══ starship ════════════════════════════════════════════════════════════════
   # Интеграцию с fish и цвета Stylix делают сами (targets.starship).
@@ -628,7 +639,7 @@ hl.curve("easeInOutCubic", { type = "bezier", points = { {0.65, 0.05}, {0.36, 1}
 hl.curve("linear",         { type = "bezier", points = { {0, 0},       {1, 1}       } })
 hl.curve("almostLinear",   { type = "bezier", points = { {0.5, 0.5},   {0.75, 1}    } })
 hl.curve("quick",          { type = "bezier", points = { {0.15, 0},    {0.1, 1}     } })
-hl.curve("easy",           { type = "spring", mass = 1, stiffness = 238.1191, damping = 24.21279333 })
+hl.curve("easy",           { type = "spring", mass = 1, stiffness = 238.1191, dampening = 24.21279333 })
 
 hl.animation({ leaf = "global",        enabled = true,  speed = 10,   bezier = "default" })
 hl.animation({ leaf = "border",        enabled = true,  speed = 5.39, bezier = "easeOutQuint" })
@@ -675,17 +686,6 @@ hl.config({
     misc = {
         force_default_wallpaper = -1,
         disable_hyprland_logo   = false,
-    },
-})
-
-
-----------------
----- LAYERS ----
-----------------
-
-hl.config({
-    layers = {
-        allow_new_top_layers_over_existing_fullscreen = true,
     },
 })
 

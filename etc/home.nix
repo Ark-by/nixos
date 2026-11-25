@@ -99,7 +99,18 @@
 
   # ══ fish ════════════════════════════════════════════════════════════════════
   # Алиасы из старого .zshrc добавим отдельным шагом, когда сверим список.
-  programs.fish.enable = true;
+  programs.fish = {
+    enable = true;
+
+    # fastfetch при открытии kitty. FASTFETCH_SHOWN не даёт ему срабатывать
+    # повторно во вложенных fish. Хочешь во всех терминалах — убери проверку TERM.
+    interactiveShellInit = ''
+      if status is-interactive; and not set -q FASTFETCH_SHOWN; and test "$TERM" = xterm-kitty
+          set -gx FASTFETCH_SHOWN 1
+          fastfetch
+      end
+    '';
+  };
 
   # ══ starship ════════════════════════════════════════════════════════════════
   # Интеграцию с fish и цвета Stylix делают сами (targets.starship).
