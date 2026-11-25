@@ -146,7 +146,7 @@ in
   # ══ Шрифты ══════════════════════════════════════════════════════════════════
   fonts.packages = with pkgs; [
     noto-fonts
-    noto-fonts-emoji
+    noto-fonts-color-emoji # в 26.05 переименован из noto-fonts-emoji
     nerd-fonts.jetbrains-mono # иконки для waybar/kitty/starship
   ];
 
