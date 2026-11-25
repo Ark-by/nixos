@@ -133,9 +133,12 @@ in
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
   # ══ Оболочка по умолчанию ═══════════════════════════════════════════════════
+  # users.defaultUserShell НЕ трогаем: он уже определён (модуль shell'а или
+  # system.nix), а два mkDefault NixOS не сливает — «conflicting definition
+  # values». Нам достаточно явно зафиксировать шелл своему пользователю.
+  # mkForce — чтобы не зависеть от того, что прописано в system.nix.
   programs.fish.enable = true;
-  users.defaultUserShell = lib.mkDefault pkgs.fish;
-  users.users.${username}.shell = lib.mkDefault pkgs.fish;
+  users.users.${username}.shell = lib.mkForce pkgs.fish;
 
   # ══ Подкачка в RAM ══════════════════════════════════════════════════════════
   zramSwap.enable = lib.mkDefault true;
