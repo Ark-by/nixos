@@ -181,5 +181,9 @@ in
     slurp
     libnotify
     xdg-utils
+
+    # для биндов: громкость (wpctl) и медиа-клавиши (playerctl)
+    wireplumber
+    playerctl
   ];
 }

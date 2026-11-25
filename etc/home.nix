@@ -113,8 +113,21 @@
     };
   };
 
-  # ══ fastfetch ═══════════════════════════════════════════════════════════════
-  # Файл лежит как есть (jsonc с комментариями), поэтому не через
-  # programs.fastfetch.settings (он пишет чистый json).
-  xdg.configFile."fastfetch/config.jsonc".source = ./configs/fastfetch.jsonc;
+  # ══ Hyprland и fastfetch: файлы ═════════════════════════════════════════════
+  # Hyprland 0.55+ читает ~/.config/hypr/hyprland.lua и перечитывает его при
+  # сохранении. keybinds.lua подключается через require(), colors.lua — dofile().
+  xdg.configFile =
+    {
+      "hypr/hyprland.lua".source = ./configs/hypr/hyprland.lua;
+      "hypr/keybinds.lua".source = ./configs/hypr/keybinds.lua;
+      "hypr/colors.lua".source = ./configs/hypr/colors.lua;
+
+      # fastfetch: jsonc с комментариями
+      "fastfetch/config.jsonc".source = ./configs/fastfetch.jsonc;
+    }
+    # логотип — бинарник, его докачивает theme.sh; на этапе install его может
+    # ещё не быть, поэтому линкуем только если файл реально существует
+    // lib.optionalAttrs (builtins.pathExists ./configs/fastfetch/logo2.png) {
+      "fastfetch/assets/logo2.png".source = ./configs/fastfetch/logo2.png;
+    };
 }
