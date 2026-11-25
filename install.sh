@@ -506,6 +506,190 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
     };
   };
 
+  # ══ waybar ══════════════════════════════════════════════════════════════════
+  # Палитру и шрифт подставляет Stylix (он пишет @define-color base00…base0F
+  # и базовый CSS). Наш style дописывается через mkAfter — поэтому идёт
+  # последним и может переопределять геометрию, используя те же переменные.
+  programs.waybar = {
+    enable = true;
+    systemd.enable = true; # стартует с graphical-session.target, exec-once не нужен
+
+    settings = [
+      {
+        layer = "top";
+        position = "top";
+        height = 34;
+        spacing = 6;
+
+        "margin-top" = 6;
+        "margin-left" = 10;
+        "margin-right" = 10;
+
+        "modules-left" = [
+          "hyprland/workspaces"
+          "hyprland/window"
+        ];
+        "modules-center" = [ "clock" ];
+        "modules-right" = [
+          "tray"
+          "pulseaudio"
+          "network"
+          "cpu"
+          "memory"
+          "hyprland/language"
+        ];
+
+        "hyprland/workspaces" = {
+          format = "{name}";
+          "on-click" = "activate";
+          "all-outputs" = true;
+          "persistent-workspaces" = {
+            "*" = [
+              1
+              2
+              3
+              4
+              5
+              6
+              7
+              8
+              9
+              10
+            ];
+          };
+        };
+
+        "hyprland/window" = {
+          format = "{title}";
+          "max-length" = 70;
+          "separate-outputs" = true;
+        };
+
+        "hyprland/language" = {
+          format = "{short}";
+          "format-en" = "EN";
+          "format-ru" = "RU";
+        };
+
+        clock = {
+          format = "{:%H:%M}";
+          "tooltip-format" = "{:%A, %d %B %Y}";
+        };
+
+        pulseaudio = {
+          format = "{icon} {volume}%";
+          "format-muted" = " muted";
+          "format-icons" = [
+            "󰕿"
+            "󰖀"
+            "󰕾"
+          ];
+          "on-click" = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+          "on-scroll-up" = "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+";
+          "on-scroll-down" = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-";
+        };
+
+        network = {
+          "format-wifi" = "󰤨 {essid} {signalStrength}%";
+          "format-ethernet" = "󰈀 {ipaddr}";
+          "format-disconnected" = "󰤭";
+          "tooltip-format" = "{ifname} → {gwaddr}";
+        };
+
+        cpu = {
+          format = " {usage}%";
+          interval = 3;
+        };
+
+        memory = {
+          format = "󰍛 {used:0.1f}/{total:0.1f} GiB";
+          interval = 5;
+        };
+
+        tray = {
+          spacing = 8;
+          "icon-size" = 16;
+        };
+      }
+    ];
+
+    style = lib.mkAfter ''
+      * {
+        border: none;
+        border-radius: 0;
+        min-height: 0;
+        padding: 0;
+        margin: 0;
+      }
+
+      window#waybar {
+        background: alpha(@base00, 0.85);
+        border-radius: 12px;
+        color: @base05;
+        padding: 0 10px;
+      }
+
+      .modules-left, .modules-center, .modules-right {
+        padding: 0 4px;
+      }
+
+      #workspaces button {
+        padding: 0 9px;
+        margin: 4px 2px;
+        border-radius: 8px;
+        color: @base04;
+        background: transparent;
+      }
+
+      #workspaces button:hover {
+        background: alpha(@base02, 0.8);
+        color: @base05;
+      }
+
+      #workspaces button.active {
+        background: @base0D;
+        color: @base00;
+      }
+
+      #workspaces button.urgent {
+        background: @base08;
+        color: @base00;
+      }
+
+      #window {
+        color: @base04;
+      }
+
+      #clock {
+        color: @base0D;
+        font-weight: 600;
+      }
+
+      #cpu, #memory, #pulseaudio, #network, #language {
+        padding: 0 8px;
+        color: @base05;
+      }
+
+      #cpu:hover, #memory:hover, #pulseaudio:hover, #network:hover, #language:hover, #clock:hover {
+        color: @base0C;
+      }
+
+      #tray {
+        padding: 0 4px;
+      }
+
+      tooltip {
+        background: @base00;
+        border: 1px solid @base0D;
+        border-radius: 8px;
+      }
+
+      tooltip label {
+        color: @base05;
+      }
+    '';
+  };
+
   # ══ yazi ════════════════════════════════════════════════════════════════════
   # Из Ark-by/arch (exp): показывать скрытые, Enter = войти в папку или открыть
   # файл (smart-enter), текст открывать в Zed.
