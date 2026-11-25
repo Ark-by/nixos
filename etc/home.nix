@@ -137,6 +137,10 @@
     enable = true;
     shellWrapperName = "y";
 
+    # yazi определяет mime через `file`; без него text/* не сработает и
+    # Enter на файле уйдёт в xdg-open вместо Zed.
+    extraPackages = with pkgs; [ file ];
+
     settings = {
       mgr.show_hidden = true; # как в yazi.toml
 
