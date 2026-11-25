@@ -60,6 +60,23 @@ else
   ok "logo2.png скачан ($(stat -c%s /etc/nixos/configs/fastfetch/logo2.png) байт)"
 fi
 
+say "Чищу устаревшие *.hm-bak"
+# home-manager при повторной активации бэкапит существующий файл в <файл>.hm-bak
+# и падает, если такой бэкап уже есть (например, от прерванной попытки).
+# Уносим их в папку бэкапа, чтобы активация прошла.
+HM_HOME="$(getent passwd "$U" | cut -d: -f6)"
+if [ -n "$HM_HOME" ] && [ -d "$HM_HOME" ]; then
+  mkdir -p "$BK/hm-bak"
+  found="$(find "$HM_HOME" -maxdepth 4 -name '*.hm-bak' -print 2>/dev/null || true)"
+  if [ -n "$found" ]; then
+    printf '%s\n' "$found"
+    find "$HM_HOME" -maxdepth 4 -name '*.hm-bak' -exec mv -t "$BK/hm-bak" -- {} + 2>/dev/null || true
+    ok "перенесено в $BK/hm-bak"
+  else
+    ok "нечего чистить"
+  fi
+fi
+
 say "Сборка"
 export NIX_CONFIG="experimental-features = nix-command flakes"
 nixos-rebuild switch --flake /etc/nixos#nixos --show-trace
