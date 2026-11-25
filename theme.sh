@@ -11,6 +11,7 @@ set -euo pipefail
 HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 SRC="$HERE/etc"
 LOGO_URL="https://raw.githubusercontent.com/Ark-by/arch/exp/config/fastfetch/assets/logo2.png"
+ZED_THEME_URL="https://raw.githubusercontent.com/Ark-by/arch/exp/config/zed/themes/ark-tokyonight.json"
 
 C_OK=$'\033[1;32m'; C_ERR=$'\033[1;31m'; C_HDR=$'\033[1;36m'; C_OFF=$'\033[0m'
 say() { printf '\n%s▶ %s%s\n' "$C_HDR" "$*" "$C_OFF"; }
@@ -65,7 +66,7 @@ if [ -L /etc/nixos ]; then
   ok "владелец /etc/nixos → $U (симлинк в домашнюю папку)"
 fi
 
-say "Логотип fastfetch"
+say "Логотип fastfetch и тема Zed"
 if [ -s /etc/nixos/configs/fastfetch/logo2.png ]; then
   ok "logo2.png уже на месте ($(stat -c%s /etc/nixos/configs/fastfetch/logo2.png) байт)"
 else
@@ -73,6 +74,15 @@ else
   curl -fsSL --max-time 60 "$LOGO_URL" -o /etc/nixos/configs/fastfetch/logo2.png \
     || die "не скачался logo2.png; положи файл вручную: /etc/nixos/configs/fastfetch/logo2.png"
   ok "logo2.png скачан ($(stat -c%s /etc/nixos/configs/fastfetch/logo2.png) байт)"
+fi
+
+install -d -m 0755 /etc/nixos/configs/zed/themes
+if [ -s /etc/nixos/configs/zed/themes/ark-tokyonight.json ]; then
+  ok "тема Zed уже на месте"
+else
+  curl -fsSL --max-time 60 "$ZED_THEME_URL" -o /etc/nixos/configs/zed/themes/ark-tokyonight.json \
+    || die "не скачалась тема Zed; положи файл вручную: /etc/nixos/configs/zed/themes/ark-tokyonight.json"
+  ok "тема Zed скачана"
 fi
 
 say "Чищу устаревшие *.hm-bak"

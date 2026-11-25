@@ -760,6 +760,24 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
     plugins.smart-enter = ./configs/yazi/plugins/smart-enter.yazi;
   };
 
+  # ══ Zed ═════════════════════════════════════════════════════════════════════
+  # Настройки из config/zed/settings.json (exp). Тема — файл ark-tokyonight.json,
+  # его скачивает theme.sh (как логотип), ниже он линкуется только если есть.
+  programs.zed-editor = {
+    enable = true;
+    userSettings = {
+      theme = "Ark Tokyo Night";
+      buffer_font_family = "JetBrainsMono Nerd Font Mono";
+      buffer_font_size = 14.0;
+      ui_font_family = "JetBrainsMono Nerd Font";
+      ui_font_size = 14.0;
+      terminal = {
+        font_family = "JetBrainsMono Nerd Font Mono";
+        font_size = 14.0;
+      };
+    };
+  };
+
   # ══ Hyprland и fastfetch: файлы ═════════════════════════════════════════════
   # Hyprland 0.55+ читает ~/.config/hypr/hyprland.lua и перечитывает его при
   # сохранении. keybinds.lua подключается через require(), colors.lua — dofile().
@@ -819,6 +837,9 @@ cat > /etc/nixos/home.nix <<'NIXHOME'
     # ещё не быть, поэтому линкуем только если файл реально существует
     // lib.optionalAttrs (builtins.pathExists ./configs/fastfetch/logo2.png) {
       "fastfetch/assets/logo2.png".source = ./configs/fastfetch/logo2.png;
+    }
+    // lib.optionalAttrs (builtins.pathExists ./configs/zed/themes/ark-tokyonight.json) {
+      "zed/themes/ark-tokyonight.json".source = ./configs/zed/themes/ark-tokyonight.json;
     };
 }
 NIXHOME
