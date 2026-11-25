@@ -1381,35 +1381,60 @@ IDLERESTORE
 
 cat > /etc/nixos/configs/bin/wallpaper-pick <<'WALLPAPER'
 #!/usr/bin/env bash
-# Выбор обоев через rofi. Обои живут в ~/Pictures/Wallpapers — там yazi пишет
-# без sudo. Выбранная картинка линкуется в current.png и применяется hyprpaper.
-set -euo pipefail
+# Выбор обоев через rofi.
+# Обои живут в ~/Pictures/Wallpapers (yazi пишет без sudo), выбранная картинка
+# линкуется в current.png и применяется в hyprpaper через IPC.
+# Всё пишется в лог: ~/.local/state/wallpaper-pick.log
+set -uo pipefail
+
+LOG="${XDG_STATE_HOME:-$HOME/.local/state}/wallpaper-pick.log"
+mkdir -p "$(dirname "$LOG")" 2>/dev/null || true
+exec >>"$LOG" 2>&1
+echo "--- $(date -Is) ---"
+
+fail() {
+    echo "FAIL: $1"
+    # rofi -e показывает ошибку без демона уведомлений
+    rofi -e "$1" >/dev/null 2>&1 || true
+    exit 1
+}
+
+command -v rofi >/dev/null || fail "rofi не установлен (нужен nixos-rebuild)"
+command -v hyprctl >/dev/null || fail "hyprctl не найден"
 
 DIR="${WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
-LINK="$DIR/current.png"
-
-mkdir -p "$DIR"
+mkdir -p "$DIR" || fail "не удалось создать $DIR"
+echo "DIR=$DIR"
+ls -la "$DIR" || true
 
 mapfile -t files < <(
     find "$DIR" -maxdepth 1 -type f \
         \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) \
         ! -name 'current.png' | sort
 )
+echo "найдено файлов: ${#files[@]}"
 
 if [ "${#files[@]}" -eq 0 ]; then
-    rofi -e "В $DIR нет картинок — положи туда png/jpg и повтори."
-    exit 0
+    fail "в $DIR нет картинок — положи png/jpg и повтори"
 fi
 
-choice="$(printf '%s\n' "${files[@]}" | rofi -dmenu -i -p 'Обои')"
-[ -n "$choice" ] || exit 0
+choice="$(printf '%s\n' "${files[@]}" | rofi -dmenu -i -p 'Обои')" || fail "rofi завершился с ошибкой"
+[ -n "$choice" ] || { echo "отменено пользователем"; exit 0; }
+echo "выбрано: $choice"
 
-ln -sfn "$choice" "$LINK"
+LINK="$DIR/current.png"
+ln -sfn "$choice" "$LINK" || fail "не удалось создать симлинк $LINK"
 
-# hyprpaper: сначала выгружаем старое, потом грузим новое.
+if ! pgrep -x hyprpaper >/dev/null; then
+    echo "hyprpaper не запущен, стартую"
+    hyprctl dispatch exec hyprpaper >/dev/null 2>&1 || true
+    sleep 1
+fi
+
 hyprctl hyprpaper unload all >/dev/null 2>&1 || true
-hyprctl hyprpaper preload "$LINK" >/dev/null
-hyprctl hyprpaper wallpaper ",$LINK" >/dev/null
+hyprctl hyprpaper preload "$LINK" || true
+hyprctl hyprpaper wallpaper ",$LINK" || fail "hyprpaper не принял обои (проверь, что он запущен)"
+echo "ок"
 WALLPAPER
 
 cat > /etc/nixos/configs/bin/shortcuts <<'SHORTCUTS'
