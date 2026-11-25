@@ -148,19 +148,21 @@
         {
           run = ''zeditor -w "$@"'';
           desc = "Zed";
-          for = "unix";
           block = false;
         }
       ];
 
+      # Порядок важен: срабатывает первое совпадение, * — последним.
+      # Без правила * файл с неопознанным mime не открылся бы вообще.
       open.rules = [
         { mime = "text/*"; use = "edit"; }
         { mime = "application/json"; use = "edit"; }
-        { mime = "application/x-yaml"; use = "edit"; }
         { mime = "application/toml"; use = "edit"; }
+        { mime = "application/x-yaml"; use = "edit"; }
         { mime = "application/x-shellscript"; use = "edit"; }
-        { mime = "inode/x-empty"; use = "edit"; }
         { mime = "application/x-*"; use = "edit"; }
+        { mime = "inode/x-empty"; use = "edit"; }
+        { mime = "*"; use = "open"; }
       ];
     };
 
