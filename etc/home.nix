@@ -79,6 +79,11 @@
 
     # Прозрачность терминала — как background_opacity 0.8 в старом kitty.conf
     opacity.terminal = 0.8;
+
+    # У Stylix есть цель для Zed, но она БЕЗ mkDefault ставит
+    # userSettings.theme = "Base16 …" и шрифты — это конфликтует с нашей темой
+    # Ark Tokyo Night. Цель выключаем, тему подключаем файлом.
+    targets.zed.enable = false;
   };
 
   # ══ kitty ═══════════════════════════════════════════════════════════════════
