@@ -56,6 +56,13 @@ sed -i "s/@USERNAME@/${U}/g" /etc/nixos/flake.nix
 grep -q "@USERNAME@" /etc/nixos/flake.nix && die "не подставилось имя пользователя"
 ok "flake.nix, home.nix, configs/hypr/*, configs/fastfetch.jsonc, yazi smart-enter, idle-скрипты"
 
+# Если /etc/nixos — симлинк в домашнюю папку (см. README), возвращаем владельца,
+# чтобы конфиги можно было править из yazi/zed без sudo.
+if [ -L /etc/nixos ]; then
+  chown -R "$U":"$(id -gn "$U")" /etc/nixos/ 2>/dev/null || true
+  ok "владелец /etc/nixos → $U (симлинк в домашнюю папку)"
+fi
+
 say "Логотип fastfetch"
 if [ -s /etc/nixos/configs/fastfetch/logo2.png ]; then
   ok "logo2.png уже на месте ($(stat -c%s /etc/nixos/configs/fastfetch/logo2.png) байт)"
