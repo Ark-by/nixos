@@ -33,18 +33,20 @@ done
 printf '  ── не найдено: %s\n' "$missing"
 
 head2 "Экран входа (greetd + HyprLogin)"
-systemctl is-enabled --quiet greetd && ok "greetd включён в автозапуск" || bad "greetd не включён"
+if systemctl is-enabled --quiet greetd; then ok "greetd включён в автозапуск"; else bad "greetd не включён"; fi
 if systemctl is-active --quiet greetd; then
   ok "greetd активен"
 else
   info "greetd сейчас не активен (нормально: ты уже вошёл, greeter завершился)"
 fi
-if [ -f /etc/greetd/config.toml ]; then
-  info "сессия: $(grep -o 'start-hyprland.*' /etc/greetd/config.toml | head -1)"
+# В NixOS у greetd НЕТ /etc/greetd/config.toml: конфиг передаётся прямо из /nix/store
+greeter_cmd="$(systemctl show greetd -p ExecStart --value 2>/dev/null | tr ' ' '\n' | grep -Eo 'start-hyprland|tuigreet|hyprlogin' | head -1)"
+[ -n "$greeter_cmd" ] && ok "грейтер: $greeter_cmd" || info "не удалось определить команду грейтера"
+if [ -f /etc/hyprlogin/hyprlogin.conf ]; then
+  ok "конфиг /etc/hyprlogin/hyprlogin.conf"
 else
-  bad "нет /etc/greetd/config.toml"
+  info "нет /etc/hyprlogin/hyprlogin.conf (это нормально только для tuigreet)"
 fi
-[ -f /etc/hyprlogin/hyprlogin.conf ] && ok "конфиг /etc/hyprlogin/hyprlogin.conf" || bad "нет /etc/hyprlogin/hyprlogin.conf"
 
 head2 "NVIDIA"
 if have nvidia-smi; then
@@ -53,7 +55,7 @@ if have nvidia-smi; then
 else
   bad "nvidia-smi отсутствует"
 fi
-[ -e /dev/dri/card0 ] && ok "/dev/dri/card0 есть" || bad "нет /dev/dri/card0"
+[ -e /dev/dri/card0 ] && ok "/dev/dri/card0 есть" || bad "нет /dev/dri/card0 — драйвер не отдал GPU, Hyprland не запустится"
 info "группы: $(id -nG "$(id -un)")"
 
 head2 "Hyprland"
